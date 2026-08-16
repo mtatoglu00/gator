@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -14,6 +13,16 @@ const configFileName = ".gatorconfig.json"
 type Config struct {
 	Db_url            string `json:"db_url"`
 	Current_user_name string `json:"current_user_name"`
+}
+
+var Cfg Config
+
+func init() {
+	path, err := GetConfigFilePath()
+	if err != nil {
+		log.Fatalf("Error! Invalid path: %v", err)
+	}
+	Cfg = Read(path)
 }
 
 func Read(path string) Config {
@@ -30,7 +39,6 @@ func Read(path string) Config {
 		log.Fatalf("Error reading file: %v", err)
 		return Config{}
 	}
-	fmt.Println(string(byteStream))
 
 	defer data.Close()
 
@@ -77,9 +85,11 @@ func GetConfigFilePath() (string, error) {
 	}
 }
 
-func (cfg Config) SetUser(username string) {
+func (cfg Config) SetUser(username string) error {
 	cfg.Current_user_name = username
 	if err := write(cfg); err != nil {
 		log.Fatalf("Error changing the username: %v", err)
+		return err
 	}
+	return nil
 }
