@@ -1,15 +1,15 @@
 package cli
 
 import (
-	"errors"
-	"fmt"
 	"log"
 	"os"
 
 	"gator/internal/config"
+	"gator/internal/database"
 )
 
 type State struct {
+	Db     *database.Queries
 	Config *config.Config
 }
 
@@ -44,18 +44,7 @@ func init() {
 	ConsoleCommand = Command{Name: command_part, Arguments: arguments_part}
 
 	Cmds.Register("login", HandlerLogin)
-}
-
-func HandlerLogin(s *State, cmd Command) error {
-	if len(cmd.Arguments) < 1 {
-		return errors.New("the login handler expects a single argument: The username")
-	}
-
-	if err := s.Config.SetUser(cmd.Arguments[0]); err != nil {
-		return err
-	}
-	fmt.Printf("User: %s has been set.", cmd.Arguments[0])
-	return nil
+	Cmds.Register("register", HandlerRegister)
 }
 
 func (c *Commands) Run(s *State, cmd Command) error {
