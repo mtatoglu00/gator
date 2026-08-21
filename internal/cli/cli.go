@@ -45,6 +45,8 @@ func init() {
 
 	Cmds.Register("login", HandlerLogin)
 	Cmds.Register("register", HandlerRegister)
+	Cmds.Register("reset", HandlerReset)
+	Cmds.Register("users", HandlerUsers)
 }
 
 func (c *Commands) Run(s *State, cmd Command) error {
