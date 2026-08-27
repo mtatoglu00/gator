@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gator/internal/database"
+	"gator/internal/rss"
 
 	"github.com/google/uuid"
 )
@@ -79,5 +80,10 @@ func HandlerUsers(s *State, cmd Command) error {
 			fmt.Println(v.Name)
 		}
 	}
+	return nil
+}
+
+func HandlerAgg(s *State, cmd Command) error {
+	rss.Agg()
 	return nil
 }
