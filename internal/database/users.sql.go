@@ -24,7 +24,7 @@ VALUES (
 `
 
 type CreateUserParams struct {
-	ID        uuid.NullUUID
+	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Name      string
@@ -48,16 +48,37 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUser = `-- name: GetUser :one
-
-SELECT name FROM users
+SELECT id, created_at, updated_at, name FROM users
 WHERE name = $1
 `
 
-func (q *Queries) GetUser(ctx context.Context, name string) (string, error) {
+func (q *Queries) GetUser(ctx context.Context, name string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUser, name)
-	var name_2 string
-	err := row.Scan(&name_2)
-	return name_2, err
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, created_at, updated_at, name FROM users
+WHERE id = $1
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+	)
+	return i, err
 }
 
 const getUsers = `-- name: GetUsers :many
