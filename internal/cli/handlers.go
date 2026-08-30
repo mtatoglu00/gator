@@ -139,3 +139,32 @@ func HandlerGetFeeds(s *State, cmd Command) error {
 	}
 	return nil
 }
+
+func HandlerFollow(s *State, cmd Command) error {
+	user, err := s.Db.GetUser(context.Background(), s.Config.Current_user_name)
+	if err != nil {
+		log.Fatalln("error fetching user")
+		return err
+	}
+
+	feed, err := s.Db.GetFeedByURL(context.Background(), cmd.Arguments[0])
+	if err != nil {
+		log.Fatalln("error fetching feed by URL")
+		return err
+	}
+
+	params := database.CreateFeedFollowParams{
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		UserID:    user.ID,
+		FeedID:    feed.ID,
+	}
+
+	_, err = s.Db.CreateFeedFollow(context.Background(), params)
+	if err != nil {
+		log.Fatalln("error when creating feed follow", err)
+		return err
+	}
+
+	return nil
+}
