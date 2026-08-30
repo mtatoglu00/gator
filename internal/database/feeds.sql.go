@@ -57,13 +57,12 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 
 const createFeedFollow = `-- name: CreateFeedFollow :one
 WITH inserted_feed_follow AS (
-INSERT INTO feed_follows (id, created_at, updated_at, user_id, feed_id)
+INSERT INTO feed_follows (created_at, updated_at, user_id, feed_id)
 VALUES (
   $1,
   $2,
   $3,
-  $4,
-  $5
+  $4
   )
   RETURNING id, created_at, updated_at, user_id, feed_id
 )
@@ -77,7 +76,6 @@ INNER JOIN feeds ON inserted_feed_follow.feed_id = feeds.id
 `
 
 type CreateFeedFollowParams struct {
-	ID        int32
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	UserID    uuid.UUID
@@ -96,7 +94,6 @@ type CreateFeedFollowRow struct {
 
 func (q *Queries) CreateFeedFollow(ctx context.Context, arg CreateFeedFollowParams) (CreateFeedFollowRow, error) {
 	row := q.db.QueryRowContext(ctx, createFeedFollow,
-		arg.ID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 		arg.UserID,
@@ -132,6 +129,42 @@ func (q *Queries) GetFeedByURL(ctx context.Context, url string) (Feed, error) {
 		&i.UserID,
 	)
 	return i, err
+}
+
+const getFeedFollowsForUser = `-- name: GetFeedFollowsForUser :many
+SELECT users.name AS User_Name, feeds.name AS Feed_Name, feeds.url AS url FROM users
+INNER JOIN feed_follows ON users.id = feed_follows.user_id
+INNER JOIN feeds ON feeds.id = feed_follows.feed_id
+WHERE users.name = $1
+`
+
+type GetFeedFollowsForUserRow struct {
+	UserName string
+	FeedName string
+	Url      string
+}
+
+func (q *Queries) GetFeedFollowsForUser(ctx context.Context, name string) ([]GetFeedFollowsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getFeedFollowsForUser, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetFeedFollowsForUserRow
+	for rows.Next() {
+		var i GetFeedFollowsForUserRow
+		if err := rows.Scan(&i.UserName, &i.FeedName, &i.Url); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getFeeds = `-- name: GetFeeds :many

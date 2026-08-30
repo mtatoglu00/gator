@@ -51,6 +51,7 @@ func init() {
 	Cmds.Register("addfeed", HandlerAddFeed)
 	Cmds.Register("feeds", HandlerGetFeeds)
 	Cmds.Register("follow", HandlerFollow)
+	Cmds.Register("following", HandlerFollowing)
 }
 
 func (c *Commands) Run(s *State, cmd Command) error {

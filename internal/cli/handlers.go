@@ -117,6 +117,11 @@ func HandlerAddFeed(s *State, cmd Command) error {
 	fmt.Println(feed.Name)
 	fmt.Println(feed.Url)
 
+	HandlerFollow(s, Command{Name: "follow", Arguments: []string{feed.Url}})
+	if err != nil {
+		log.Fatalln("error following feed", err)
+		return err
+	}
 	return nil
 }
 
@@ -166,5 +171,24 @@ func HandlerFollow(s *State, cmd Command) error {
 		return err
 	}
 
+	return nil
+}
+
+func HandlerFollowing(s *State, cmd Command) error {
+	user, err := s.Db.GetUser(context.Background(), s.Config.Current_user_name)
+	if err != nil {
+		log.Fatalln("error when fetching current user", err)
+		return err
+	}
+
+	followedFeeds, err := s.Db.GetFeedFollowsForUser(context.Background(), user.Name)
+	if err != nil {
+		log.Fatalln("error when fetching users followed feeds", err)
+		return err
+	}
+
+	for _, v := range followedFeeds {
+		fmt.Println(v.FeedName, v.Url)
+	}
 	return nil
 }
