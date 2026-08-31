@@ -18,9 +18,13 @@ func HandlerLogin(s *State, cmd Command) error {
 		return errors.New("the login handler expects a single argument: The username")
 	}
 
-	usercheck, _ := Sta.Db.GetUser(context.Background(), cmd.Arguments[0])
+	usercheck, err := Sta.Db.GetUser(context.Background(), cmd.Arguments[0])
+	if err != nil {
+		log.Println("error when fetching user", err)
+		return err
+	}
 	if usercheck.Name == "" {
-		return errors.New("User does not exist!")
+		return errors.New("user does not exist")
 	}
 
 	if err := s.Config.SetUser(cmd.Arguments[0]); err != nil {
@@ -53,7 +57,11 @@ func HandlerRegister(s *State, cmd Command) error {
 		log.Fatalf("Error when creating a user: %v", err)
 	}
 	fmt.Printf("User %s created successfully!", data.Name)
-	s.Config.SetUser(data.Name)
+	err = s.Config.SetUser(data.Name)
+	if err != nil {
+		log.Fatalln("error setting user", err)
+		return err
+	}
 	return nil
 }
 
@@ -88,16 +96,9 @@ func HandlerAgg(s *State, cmd Command) error {
 	return nil
 }
 
-func HandlerAddFeed(s *State, cmd Command) error {
-	user, err := s.Db.GetUser(context.Background(), s.Config.Current_user_name)
-	if err != nil {
-		log.Fatalf("error when fetching current user: %w", err)
-		return err
-	}
-
+func HandlerAddFeed(s *State, cmd Command, user database.User) error {
 	if len(cmd.Arguments) < 2 {
 		log.Fatal("error. Not enough argument")
-		return nil
 	}
 
 	params := database.CreateFeedParams{
@@ -110,14 +111,14 @@ func HandlerAddFeed(s *State, cmd Command) error {
 	}
 	feed, err := s.Db.CreateFeed(context.Background(), params)
 	if err != nil {
-		log.Fatalf("error when creating feed: %w", err)
+		log.Fatalln("error when creating feed:", err)
 		return err
 	}
 
 	fmt.Println(feed.Name)
 	fmt.Println(feed.Url)
 
-	HandlerFollow(s, Command{Name: "follow", Arguments: []string{feed.Url}})
+	err = HandlerFollow(s, Command{Name: "follow", Arguments: []string{feed.Url}}, user)
 	if err != nil {
 		log.Fatalln("error following feed", err)
 		return err
@@ -145,13 +146,7 @@ func HandlerGetFeeds(s *State, cmd Command) error {
 	return nil
 }
 
-func HandlerFollow(s *State, cmd Command) error {
-	user, err := s.Db.GetUser(context.Background(), s.Config.Current_user_name)
-	if err != nil {
-		log.Fatalln("error fetching user")
-		return err
-	}
-
+func HandlerFollow(s *State, cmd Command, user database.User) error {
 	feed, err := s.Db.GetFeedByURL(context.Background(), cmd.Arguments[0])
 	if err != nil {
 		log.Fatalln("error fetching feed by URL")
@@ -174,16 +169,10 @@ func HandlerFollow(s *State, cmd Command) error {
 	return nil
 }
 
-func HandlerFollowing(s *State, cmd Command) error {
-	user, err := s.Db.GetUser(context.Background(), s.Config.Current_user_name)
-	if err != nil {
-		log.Fatalln("error when fetching current user", err)
-		return err
-	}
-
+func HandlerFollowing(s *State, cmd Command, user database.User) error {
 	followedFeeds, err := s.Db.GetFeedFollowsForUser(context.Background(), user.Name)
 	if err != nil {
-		log.Fatalln("error when fetching users followed feeds", err)
+		log.Println("error when fetching users followed feeds", err)
 		return err
 	}
 
@@ -191,4 +180,15 @@ func HandlerFollowing(s *State, cmd Command) error {
 		fmt.Println(v.FeedName, v.Url)
 	}
 	return nil
+}
+
+func middlewareLoggedIn(handler func(s *State, cmd Command, user database.User) error) func(*State, Command) error {
+	return func(s *State, cmd Command) error {
+		user, err := s.Db.GetUser(context.Background(), s.Config.Current_user_name)
+		if err != nil {
+			log.Println("error when fetching current user", err)
+			return err
+		}
+		return handler(s, cmd, user)
+	}
 }

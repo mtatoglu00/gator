@@ -48,10 +48,10 @@ func init() {
 	Cmds.Register("reset", HandlerReset)
 	Cmds.Register("users", HandlerUsers)
 	Cmds.Register("agg", HandlerAgg)
-	Cmds.Register("addfeed", HandlerAddFeed)
+	Cmds.Register("addfeed", middlewareLoggedIn(HandlerAddFeed))
 	Cmds.Register("feeds", HandlerGetFeeds)
-	Cmds.Register("follow", HandlerFollow)
-	Cmds.Register("following", HandlerFollowing)
+	Cmds.Register("follow", middlewareLoggedIn(HandlerFollow))
+	Cmds.Register("following", middlewareLoggedIn(HandlerFollowing))
 }
 
 func (c *Commands) Run(s *State, cmd Command) error {
