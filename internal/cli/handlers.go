@@ -192,3 +192,15 @@ func middlewareLoggedIn(handler func(s *State, cmd Command, user database.User) 
 		return handler(s, cmd, user)
 	}
 }
+
+func HandlerUnfollow(s *State, cmd Command, user database.User) error {
+	params := database.UnfollowParams{UserID: user.ID, Url: cmd.Arguments[0]}
+	err := s.Db.Unfollow(context.Background(), params)
+	if err != nil {
+		log.Println("error when unfollowing feed", err)
+		return err
+	}
+
+	fmt.Println(cmd.Arguments[0], "successfully unfollowed")
+	return nil
+}

@@ -52,6 +52,7 @@ func init() {
 	Cmds.Register("feeds", HandlerGetFeeds)
 	Cmds.Register("follow", middlewareLoggedIn(HandlerFollow))
 	Cmds.Register("following", middlewareLoggedIn(HandlerFollowing))
+	Cmds.Register("unfollow", middlewareLoggedIn(HandlerUnfollow))
 }
 
 func (c *Commands) Run(s *State, cmd Command) error {
