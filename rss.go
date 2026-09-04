@@ -1,9 +1,8 @@
-package rss
+package main
 
 import (
 	"context"
 	"encoding/xml"
-	"fmt"
 	"html"
 	"io"
 	"log"
@@ -33,21 +32,33 @@ func FetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	}
 
 	req, err := http.NewRequest("GET", feedURL, nil)
+	if err != nil {
+		log.Println("error when requesting feed", err)
+		return nil, err
+	}
 
 	req.Header.Set("User-Agent", "gator")
 
 	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("error when receiving response", err)
+		return nil, err
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalln("error reading response")
+		log.Println("error reading response", err)
+		return nil, err
 	}
+
+	defer resp.Body.Close()
 
 	var data *RSSFeed
 
 	err = xml.Unmarshal(body, &data)
 	if err != nil {
-		log.Fatalln("error unmarshaling response body")
+		log.Println("error unmarshaling response body", err)
+		return nil, err
 	}
 
 	data.Channel.Title = html.UnescapeString(data.Channel.Title)
@@ -58,18 +69,4 @@ func FetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	}
 
 	return data, nil
-}
-
-func Agg() {
-	feed, err := FetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
-	if err != nil {
-		log.Fatalln("error reading feed")
-	}
-
-	fmt.Println(feed.Channel.Title)
-	fmt.Println(feed.Channel.Description)
-	for _, v := range feed.Channel.Item {
-		fmt.Println(v.Title)
-		fmt.Println(v.Description)
-	}
 }

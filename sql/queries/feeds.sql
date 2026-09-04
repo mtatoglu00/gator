@@ -47,3 +47,13 @@ DELETE FROM feed_follows
 WHERE feed_follows.user_id = $1 AND feed_follows.feed_id = (
   SELECT feeds.id FROM feeds WHERE feeds.url = $2
 );
+
+-- name: MarkFeedFetched :exec
+UPDATE feeds
+SET last_fetched_at = now(), updated_at = now()
+WHERE feeds.id = $1;
+
+-- name: GetNextFeedToFetch :one
+SELECT * FROM feeds
+ORDER BY last_fetched_at NULLS FIRST
+LIMIT 1;

@@ -1,4 +1,4 @@
-package cli
+package main
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"gator/internal/database"
-	"gator/internal/rss"
 
 	"github.com/google/uuid"
 )
@@ -88,11 +87,6 @@ func HandlerUsers(s *State, cmd Command) error {
 			fmt.Println(v.Name)
 		}
 	}
-	return nil
-}
-
-func HandlerAgg(s *State, cmd Command) error {
-	rss.Agg()
 	return nil
 }
 
@@ -203,4 +197,24 @@ func HandlerUnfollow(s *State, cmd Command, user database.User) error {
 
 	fmt.Println(cmd.Arguments[0], "successfully unfollowed")
 	return nil
+}
+
+func HandlerAgg(s *State, cmd Command) error {
+	if len(cmd.Arguments) < 1 {
+		log.Println("not enough arguments")
+		return errors.New("not enough arguments")
+	}
+	durationArg := cmd.Arguments[0]
+	duration, err := time.ParseDuration(durationArg)
+	if err != nil {
+		log.Println("error when parsing duration", err)
+		return err
+	}
+
+	fmt.Println("Collecting feeds every:", durationArg)
+
+	ticker := time.NewTicker(duration)
+	for ; ; <-ticker.C {
+		ScrapeFeeds(s)
+	}
 }
