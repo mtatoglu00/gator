@@ -63,9 +63,9 @@ func FetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 
 	data.Channel.Title = html.UnescapeString(data.Channel.Title)
 	data.Channel.Description = html.UnescapeString(data.Channel.Description)
-	for _, v := range data.Channel.Item {
-		v.Description = html.UnescapeString(v.Description)
-		v.Title = html.UnescapeString(v.Title)
+	for i, v := range data.Channel.Item {
+		data.Channel.Item[i].Description = html.UnescapeString(v.Description)
+		data.Channel.Item[i].Title = html.UnescapeString(v.Title)
 	}
 
 	return data, nil

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"gator/internal/database"
@@ -217,4 +218,35 @@ func HandlerAgg(s *State, cmd Command) error {
 	for ; ; <-ticker.C {
 		ScrapeFeeds(s)
 	}
+}
+
+func HandlerBrowse(s *State, cmd Command) error {
+	limit := 5
+	if len(cmd.Arguments) < 1 {
+		log.Println("no limit set using", limit)
+	} else {
+		fmt.Println("Setting limit to:", cmd.Arguments[0])
+		argLimit, err := strconv.Atoi(cmd.Arguments[0])
+		limit = argLimit
+		if err != nil {
+			log.Println("error when converting limit using", limit, "instead")
+		}
+
+	}
+	fmt.Println(limit)
+
+	posts, err := s.Db.GetPosts(context.Background(), int32(limit))
+	if err != nil {
+		log.Println("error when fetching posts from the db", err)
+	}
+
+	for i, v := range posts {
+		fmt.Println("Post number:", i+1)
+		fmt.Println("---------------------------------------------------")
+		fmt.Println(v.Title)
+		fmt.Println(v.Description)
+		fmt.Println(v.Url)
+	}
+
+	return nil
 }

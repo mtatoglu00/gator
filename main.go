@@ -69,4 +69,5 @@ func Init() {
 	Cmds.Register("following", middlewareLoggedIn(HandlerFollowing))
 	Cmds.Register("unfollow", middlewareLoggedIn(HandlerUnfollow))
 	Cmds.Register("agg", HandlerAgg)
+	Cmds.Register("browse", HandlerBrowse)
 }

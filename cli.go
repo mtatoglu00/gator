@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+
+	"gator/internal/database"
+
+	"github.com/google/uuid"
 )
 
 func (c *Commands) Run(s *State, cmd Command) error {
@@ -34,8 +38,18 @@ func ScrapeFeeds(s *State) error {
 	fmt.Println(fetchedFeed.Channel.Title)
 	fmt.Println(fetchedFeed.Channel.Description)
 	for _, v := range fetchedFeed.Channel.Item {
-		fmt.Println(v.Title)
-		fmt.Println(v.Description)
+		params := database.CreatePostParams{
+			ID:          uuid.New(),
+			Title:       v.Title,
+			Url:         v.Link,
+			Description: v.Description,
+			PublishedAt: v.PubDate,
+			FeedID:      feed.ID,
+		}
+		err := s.Db.CreatePost(context.Background(), params)
+		if err != nil {
+			log.Println("error when creating post in db", err)
+		}
 
 	}
 
